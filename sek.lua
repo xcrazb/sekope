@@ -1,5 +1,5 @@
 -- ============================================================
--- BAIT SCANNER + PARALLEL AUTO SCOOP (MINIMAL)
+-- BAIT SCANNER + PARALLEL AUTO SCOOP (MINIMAL + MINIMIZE)
 -- ============================================================
 local RS = game:GetService("ReplicatedStorage")
 local Players = game:GetService("Players")
@@ -16,6 +16,7 @@ local scanned, queue, active, threads = {}, {}, {}, {}
 local sent, failed = 0, 0
 local autoScan, query = true, ""
 local delay = 0.5
+local minimized = false
 
 -- ====== HELPERS ======
 local function baitName(b)
@@ -86,7 +87,7 @@ stroke.Transparency = 0.5
 
 -- TITLE
 local title = Instance.new("TextLabel", main)
-title.Size = UDim2.new(1, -30, 0, 24)
+title.Size = UDim2.new(1, -60, 0, 24)
 title.Position = UDim2.new(0, 8, 0, 4)
 title.BackgroundTransparency = 1
 title.Text = "🎣 Bait Scanner"
@@ -94,6 +95,16 @@ title.TextColor3 = C.text
 title.Font = Enum.Font.GothamBold
 title.TextSize = 12
 title.TextXAlignment = Enum.TextXAlignment.Left
+
+local btnMin = Instance.new("TextButton", main)
+btnMin.Size = UDim2.new(0, 20, 0, 20)
+btnMin.Position = UDim2.new(1, -48, 0, 6)
+btnMin.BackgroundColor3 = C.accent
+btnMin.Text = "–"
+btnMin.TextColor3 = C.text
+btnMin.Font = Enum.Font.GothamBold
+btnMin.TextSize = 14
+Instance.new("UICorner", btnMin).CornerRadius = UDim.new(0, 4)
 
 local close = Instance.new("TextButton", main)
 close.Size = UDim2.new(0, 20, 0, 20)
@@ -231,6 +242,63 @@ status.TextColor3 = C.dim
 status.Font = Enum.Font.Gotham
 status.TextSize = 10
 status.TextXAlignment = Enum.TextXAlignment.Left
+
+-- ====== MINIMIZE ======
+local fullSize = main.Size
+local fullPos = main.Position
+local compactSize = UDim2.new(0, 160, 0, 28)
+
+local function setMinimize(state)
+    minimized = state
+    if minimized then
+        fullSize = main.Size
+        fullPos = main.Position
+        search.Visible = false
+        btnScan.Visible = false
+        btnAuto.Visible = false
+        btnStart.Visible = false
+        btnStop.Visible = false
+        lblDelay.Visible = false
+        boxDelay.Visible = false
+        queueLbl.Visible = false
+        btnClear.Visible = false
+        list.Visible = false
+        status.Visible = false
+        title.Size = UDim2.new(1, -60, 1, 0)
+        title.Position = UDim2.new(0, 8, 0, 0)
+        title.Text = "🎣 " .. string.format("Q:%d", (function()
+            local n=0 for _ in pairs(queue) do n=n+1 end return n
+        end)())
+        btnMin.Text = "+"
+        main.Size = compactSize
+        main.Position = UDim2.new(
+            fullPos.X.Scale, fullPos.X.Offset,
+            fullPos.Y.Scale, fullPos.Y.Offset
+        )
+    else
+        search.Visible = true
+        btnScan.Visible = true
+        btnAuto.Visible = true
+        btnStart.Visible = true
+        btnStop.Visible = true
+        lblDelay.Visible = true
+        boxDelay.Visible = true
+        queueLbl.Visible = true
+        btnClear.Visible = true
+        list.Visible = true
+        status.Visible = true
+        title.Size = UDim2.new(1, -60, 0, 24)
+        title.Position = UDim2.new(0, 8, 0, 4)
+        title.Text = "🎣 Bait Scanner"
+        btnMin.Text = "–"
+        main.Size = fullSize
+        main.Position = fullPos
+    end
+end
+
+btnMin.MouseButton1Click:Connect(function()
+    setMinimize(not minimized)
+end)
 
 -- ====== SCOOP ======
 local function stopUID(uid)
@@ -399,6 +467,9 @@ local function render()
                     for _ in pairs(queue) do qn = qn + 1 end
                     for _ in pairs(active) do an = an + 1 end
                     queueLbl.Text = string.format("Q:%d A:%d S:%d F:%d", qn, an, sent, failed)
+                    if minimized then
+                        title.Text = "🎣 Q:" .. qn
+                    end
                 end)
             end
         end
