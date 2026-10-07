@@ -483,7 +483,7 @@ end
 -- ====== EVENTS ======
 boxDelay.FocusLost:Connect(function()
     local n = tonumber(boxDelay.Text)
-    if n and n >= 0.05 then delay = n
+    if n and n >= 0 then delay = n
     else boxDelay.Text = tostring(delay) end
 end)
 
